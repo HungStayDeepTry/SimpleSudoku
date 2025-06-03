@@ -8,12 +8,12 @@ plugins {
 
 android {
     namespace = "hung.deptrai.simplesudoku"
-    compileSdk = 34
+    compileSdk = 35
 
     defaultConfig {
         applicationId = "hung.deptrai.simplesudoku"
         minSdk = 24
-        targetSdk = 34
+        targetSdk = 35
         versionCode = 1
         versionName = "1.0"
 
@@ -64,6 +64,5 @@ dependencies {
 
     implementation(libs.androidx.hilt.navigation.compose.v120)
 
-    implementation(libs.androidx.hilt.work)
     ksp(libs.androidx.hilt.compiler)
 }

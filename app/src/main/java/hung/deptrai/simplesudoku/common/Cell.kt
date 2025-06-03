@@ -1,4 +1,4 @@
-package hung.deptrai.simplesudoku.model
+package hung.deptrai.simplesudoku.common
 
 data class Cell(
     val row: Int,

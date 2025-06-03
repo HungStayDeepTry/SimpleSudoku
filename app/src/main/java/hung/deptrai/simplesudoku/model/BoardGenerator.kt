@@ -1,5 +1,8 @@
 package hung.deptrai.simplesudoku.model
 
+import hung.deptrai.simplesudoku.common.Cell
+import hung.deptrai.simplesudoku.common.Difficulty
+
 object BoardGenerator {
     private const val BOARD_SIZE = 9
 
@@ -80,11 +83,11 @@ object BoardGenerator {
     }
 
     // Sinh một bảng Sudoku đầy đủ (solution)
-    fun generateFullBoard(): SudokuBoard {
+    fun generateFullBoard(): Array<Array<Cell>> {
         val board = Array(BOARD_SIZE) { IntArray(BOARD_SIZE) { 0 } }
         solveBoard(board)
 
-        val cells = Array(BOARD_SIZE) { row ->
+        return Array(BOARD_SIZE) { row ->
             Array(BOARD_SIZE) { col ->
                 Cell(
                     row = row,
@@ -95,14 +98,13 @@ object BoardGenerator {
                 )
             }
         }
-        return SudokuBoard(cells)
     }
 
     // Tạo puzzle từ full board theo độ khó (số ô trống)
-    fun generatePuzzle(fullBoard: SudokuBoard, diff: Difficulty): SudokuBoard {
+    fun generatePuzzle(cells: Array<Array<Cell>>, diff: Difficulty): Array<Array<Cell>> {
         // Copy giá trị từ fullBoard ra mảng IntArray để xử lý
         val boardInt = Array(BOARD_SIZE) { row ->
-            IntArray(BOARD_SIZE) { col -> fullBoard.cells[row][col].value }
+            IntArray(BOARD_SIZE) { col -> cells[row][col].value }
         }
 
         val emptyCells = when (diff) {
@@ -135,7 +137,7 @@ object BoardGenerator {
         }
 
         // Tạo lại mảng cells với isEditable và isVisible theo giá trị hiện tại
-        val puzzleCells = Array(BOARD_SIZE) { row ->
+        return Array(BOARD_SIZE) { row ->
             Array(BOARD_SIZE) { col ->
                 val value = boardInt[row][col]
                 Cell(
@@ -147,6 +149,5 @@ object BoardGenerator {
                 )
             }
         }
-        return SudokuBoard(puzzleCells)
     }
 }

@@ -1,14 +1,15 @@
 package hung.deptrai.simplesudoku.ui.component
 
+import androidx.compose.animation.core.*
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.size
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.foundation.layout.*
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
@@ -20,26 +21,44 @@ import kotlinx.coroutines.delay
 fun SplashScreen(
     navController: NavController
 ) {
+    var visible by remember { mutableStateOf(false) }
+
+    // Kích hoạt animation sau khi composable được tạo
     LaunchedEffect(Unit) {
+        delay(100) // delay nhẹ để animation mượt mà hơn
+        visible = true
         delay(2000)
-        navController.navigate("home"){
-            popUpTo("splash"){
+        navController.navigate("home") {
+            popUpTo("splash") {
                 inclusive = true
             }
         }
     }
 
+    // Hiệu ứng scale (phóng to nhẹ lên) và alpha (fade-in)
+    val scale by animateFloatAsState(
+        targetValue = if (visible) 1f else 0.8f,
+        animationSpec = tween(durationMillis = 300, easing = FastOutSlowInEasing), label = ""
+    )
+
+    val alpha by animateFloatAsState(
+        targetValue = if (visible) 1f else 0f,
+        animationSpec = tween(durationMillis = 300), label = ""
+    )
+
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(Color(0xFF6200EA)), // Màu nền splash
+            .background(MaterialTheme.colorScheme.background),
         contentAlignment = Alignment.Center
     ) {
-        // Logo ứng dụng - thay bằng resource của bạn
         Image(
-            painter = painterResource(id = R.drawable.ic_launcher_background),
+            painter = painterResource(id = R.drawable.sudoku_logo),
             contentDescription = "App Logo",
-            modifier = Modifier.size(200.dp) // Kích thước logo
+            modifier = Modifier
+                .size(200.dp)
+                .scale(scale)
+                .alpha(alpha)
         )
     }
 }
