@@ -1,5 +1,7 @@
 package hung.deptrai.simplesudoku.viewmodel
 
-sealed class HomeAction {
+import hung.deptrai.simplesudoku.common.Difficulty
 
+sealed class HomeAction {
+    data class onPlayGame(val diff: Difficulty) : HomeAction()
 }

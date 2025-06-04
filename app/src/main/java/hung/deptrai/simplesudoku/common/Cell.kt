@@ -5,5 +5,8 @@ data class Cell(
     val col: Int,
     var value: Int,
     var isVisible: Boolean,
-    var isEditable: Boolean
+    var isEditable: Boolean,
+    var userValue: Int?,
+    var isSelected: Boolean = false,
+    var isHighlighted: Boolean = false
 )

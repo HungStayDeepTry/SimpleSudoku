@@ -14,8 +14,8 @@ class GameTimer @Inject constructor(
     private var timerJob: Job? = null
     private var running: Boolean = false
 
-    private val _currentTimeDisplay = MutableStateFlow("00:00")
-    val currentTimeDisplay: StateFlow<String> get() = _currentTimeDisplay
+    private val _currentTime = MutableStateFlow(0L)
+    val currentTime: StateFlow<Long> get() = _currentTime
 
     fun start() {
         startTime = System.currentTimeMillis()
@@ -24,70 +24,43 @@ class GameTimer @Inject constructor(
         startTimer()
     }
 
-    fun pause(): String {
+    fun resume(startFrom: Long, accumulatedMillis: Long) {
+        startTime = startFrom
+        accumulated = accumulatedMillis
+        running = true
+        startTimer()
+    }
+
+    fun pause(): Pair<Long, String> {
         if (running) {
             accumulated += System.currentTimeMillis() - startTime
             running = false
             timerJob?.cancel()
+            timerJob = null
         }
-        return formatTime(getTotalElapsed())
+        val millis = accumulated
+        return millis to formatTime(millis)
     }
 
-    fun resume() {
-        if (!running) {
-            startTime = System.currentTimeMillis()
-            running = true
-            startTimer()
-        }
-    }
+    fun getElapsedMillis(): Long =
+        if (running) accumulated + (System.currentTimeMillis() - startTime) else accumulated
 
-    fun stop(): String {
-        pause()
-        val finalTime = formatTime(getTotalElapsed())
-        reset()
-        return finalTime
-    }
-
-    fun reset() {
-        timerJob?.cancel()
-        startTime = 0L
-        accumulated = 0L
-        running = false
-        _currentTimeDisplay.value = "00:00"
-    }
-
-    fun getCurrentTimeString(): String {
-        return formatTime(getTotalElapsed())
-    }
-
-    private fun getTotalElapsed(): Long {
-        return if (running) {
-            accumulated + (System.currentTimeMillis() - startTime)
-        } else {
-            accumulated
-        }
-    }
+    fun getFormattedElapsed(): String = formatTime(getElapsedMillis())
 
     private fun startTimer() {
         timerJob?.cancel()
         timerJob = scope.launch {
             while (isActive && running) {
-                _currentTimeDisplay.value = formatTime(getTotalElapsed())
+                _currentTime.value = getElapsedMillis()
                 delay(1000L)
             }
         }
     }
 
     private fun formatTime(millis: Long): String {
-        val totalSeconds = millis / 1000
-        val hours = totalSeconds / 3600
-        val minutes = (totalSeconds % 3600) / 60
-        val seconds = totalSeconds % 60
-
-        return if (hours > 0) {
-            String.format("%02d:%02d:%02d", hours, minutes, seconds)
-        } else {
-            String.format("%02d:%02d", minutes, seconds)
-        }
+        val seconds = (millis / 1000) % 60
+        val minutes = (millis / (1000 * 60)) % 60
+        val hours = (millis / (1000 * 60 * 60))
+        return String.format("%02d:%02d:%02d", hours, minutes, seconds)
     }
 }

@@ -4,12 +4,16 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import hung.deptrai.simplesudoku.common.Difficulty
 import hung.deptrai.simplesudoku.viewmodel.SudokuViewModel
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 
 @Composable
 fun AppNavHost(modifier: Modifier = Modifier) {
@@ -25,11 +29,18 @@ fun AppNavHost(modifier: Modifier = Modifier) {
             SplashScreen(navController)
         }
         composable("home"){
-            HomeScreen({
-                navController.navigate("playing")
-            }) {
-
-            }
+            val coroutineScope = rememberCoroutineScope()
+            HomeScreen(
+                onGameEvent = {
+                    coroutineScope.launch {
+                        navController.navigate("playing") {
+                            popUpTo("playing") { inclusive = true }
+                            launchSingleTop = true // đảm bảo không đẩy bản sao nếu đang ở "playing"
+                        }
+                        vm.onGameEvent(it)
+                    }
+                }
+            )
         }
         composable("playing"){
             SudokuGameScreen(
@@ -38,8 +49,28 @@ fun AppNavHost(modifier: Modifier = Modifier) {
                 onAction = {
                     vm.onPlayEvent(it)
                 },
-                selectedCell = selectedCell
+                selectedCell = selectedCell,
+                onGameEvent = {
+                    vm.onGameEvent(it)
+                }
             )
         }
+    }
+}
+
+@Composable
+fun DifficultyLauncher(
+    triggerDialog: Boolean,
+    onDismiss: () -> Unit,
+    onDifficultySelected: (Difficulty) -> Unit
+) {
+    if (triggerDialog) {
+        DifficultyDialog(
+            onDismiss = onDismiss,
+            onConfirm = { difficulty ->
+                onDismiss()
+                onDifficultySelected(difficulty)
+            }
+        )
     }
 }

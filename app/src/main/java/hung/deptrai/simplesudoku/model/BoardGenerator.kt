@@ -94,7 +94,8 @@ object BoardGenerator {
                     col = col,
                     value = board[row][col],
                     isVisible = true,     // full board: tất cả visible
-                    isEditable = false    // không cho chỉnh sửa
+                    isEditable = false,   // không cho chỉnh sửa
+                    userValue = null
                 )
             }
         }
@@ -123,6 +124,8 @@ object BoardGenerator {
         positions.shuffle()
 
         var removed = 0
+        val cellsToHide = mutableSetOf<Pair<Int, Int>>()
+
         for ((row, col) in positions) {
             if (removed >= emptyCells) break
 
@@ -132,20 +135,22 @@ object BoardGenerator {
             if (!hasUniqueSolution(boardInt)) {
                 boardInt[row][col] = backup // hoàn tác nếu không unique solution
             } else {
+                cellsToHide.add(row to col)
                 removed++
             }
         }
 
-        // Tạo lại mảng cells với isEditable và isVisible theo giá trị hiện tại
+        // Tạo lại mảng cells - giữ nguyên value, chỉ thay đổi isEditable và isVisible
         return Array(BOARD_SIZE) { row ->
             Array(BOARD_SIZE) { col ->
-                val value = boardInt[row][col]
+                val isHidden = cellsToHide.contains(row to col)
                 Cell(
                     row = row,
                     col = col,
-                    value = value,
-                    isVisible = value != 0,     // ô có giá trị thì visible
-                    isEditable = value == 0      // ô trống cho phép chỉnh sửa
+                    value = cells[row][col].value, // Giữ nguyên value từ fullBoard
+                    isVisible = !isHidden,         // ô bị hide thì không visible
+                    isEditable = isHidden,         // ô bị hide thì cho phép edit
+                    userValue = null
                 )
             }
         }

@@ -8,33 +8,69 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.asSharedFlow
+import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 class SudokuRepository @Inject constructor(
-    private val store: SudokuStore
+    private val store: SudokuStore,
+    private val timer: GameTimer
 ){
     private val _sudokuGame = MutableSharedFlow<SudokuGame>()
     val sudokuGame = _sudokuGame.asSharedFlow()
+
+    // Flow riêng cho elapsed time
+    private val _elapsedTime = MutableSharedFlow<Long>()
+    val elapsedTime = _elapsedTime.asSharedFlow()
 
     private val cells: Array<Array<Cell>> = Array(9) { row ->
         Array(9) { col ->
             Cell(
                 row = row,
                 col = col,
-                value = 0, // hoặc có thể random/đặt sẵn 1 số
+                value = 0,
                 isVisible = false,
-                isEditable = false
+                isEditable = false,
+                userValue = null,
+                isSelected = false,
+                isHighlighted = false
             )
         }
     }
-    private val game = SudokuGame(id = "", gameStatus = GameStatus.ONGOING, cells = cells, maxErrors = 0, errorCount = 0, difficulty = Difficulty.Advanced, timeElapsed = "")
+    private val game = SudokuGame(
+        id = "",
+        gameStatus = GameStatus.ONGOING,
+        cells = cells,
+        maxErrors = 0,
+        errorCount = 0,
+        difficulty = Difficulty.Advanced,
+        timeElapsed = 0L
+    )
 
     private val scope = CoroutineScope(Dispatchers.Default)
 
+    init {
+        // Subscribe elapsed time từ Store
+        scope.launch {
+            timer.currentTime.collectLatest {
+                _elapsedTime.emit(it)
+            }
+        }
+    }
+
     fun startNewGame(difficulty: Difficulty) {
         store.startNewGame(difficulty)
+        timer.start()
         updateGameFromStore()
+    }
+
+    fun selectCell(row: Int, col: Int) {
+        store.selectCell(row, col)
+        updateGameFromStore()
+    }
+
+    fun getSelectedCell(): Triple<Int, Int, Int> {
+        return store.getSelectedCell()
     }
 
     fun makeMove(row: Int, col: Int, value: Int) {
@@ -100,13 +136,29 @@ class SudokuRepository @Inject constructor(
                 targetCell.value = sourceCell.value
                 targetCell.isVisible = sourceCell.isVisible
                 targetCell.isEditable = sourceCell.isEditable
+                targetCell.userValue = sourceCell.userValue
+                targetCell.isSelected = sourceCell.isSelected
+                targetCell.isHighlighted = sourceCell.isHighlighted
             }
         }
     }
 
+    private fun stopTimer(){
+        if(game.gameStatus == GameStatus.COMPLETED || game.gameStatus == GameStatus.FINISHED){
+            timer.pause()
+        }
+    }
+    ///
+
     private fun emitGame() {
         scope.launch {
-            _sudokuGame.emit(game.copy(cells = game.cells.map { it.copyOf() }.toTypedArray()))
+            val copiedCells = Array(9) { row ->
+                Array(9) { col ->
+                    val original = game.cells[row][col]
+                    original.copy()
+                }
+            }
+            _sudokuGame.emit(game.copy(cells = copiedCells))
         }
     }
 }

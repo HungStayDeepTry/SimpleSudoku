@@ -12,7 +12,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import hung.deptrai.simplesudoku.viewmodel.CellUIState
+import hung.deptrai.simplesudoku.common.Cell
+import hung.deptrai.simplesudoku.viewmodel.HomeAction
 import hung.deptrai.simplesudoku.viewmodel.PlayAction
 import hung.deptrai.simplesudoku.viewmodel.SudokuUiState
 
@@ -21,14 +22,49 @@ fun SudokuGameScreen(
     uiState: SudokuUiState,
     selectedCell: Triple<Int, Int, Int>,
     onAction: (PlayAction) -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    onGameEvent: (HomeAction) -> Unit
 ) {
+    var showDifficultyDialog by remember { mutableStateOf(false) }
+    var hasHandledResult by remember { mutableStateOf(false) }
+
+    // Khi trạng thái game thay đổi, reset lại flag
+    LaunchedEffect(uiState.isGameCompleted, uiState.isGameFailed) {
+        if (!uiState.isGameCompleted && !uiState.isGameFailed) {
+            hasHandledResult = false
+        }
+    }
+
+    // Khi người chơi thắng hoặc thua và chưa xử lý
+    if ((uiState.isGameCompleted || uiState.isGameFailed) && !hasHandledResult) {
+        GameResultDialog(
+            uiState = uiState,
+            onGameEvent = {
+                showDifficultyDialog = true
+                hasHandledResult = true
+            },
+            onDismissRequest = {
+                showDifficultyDialog = true
+                hasHandledResult = true
+            }
+        )
+    }
+
+
     Column(
         modifier = modifier
             .fillMaxSize()
             .padding(16.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
+        DifficultyLauncher(
+            triggerDialog = showDifficultyDialog,
+            onDismiss = { showDifficultyDialog = false },
+            onDifficultySelected = { difficulty ->
+                onAction(PlayAction.RestartGame)
+                onGameEvent(HomeAction.onPlayGame(difficulty))
+            }
+        )
         // Header với Error Count và Timer
         GameHeader(
             errorCount = uiState.errorCount,
@@ -40,7 +76,7 @@ fun SudokuGameScreen(
 
         // Sudoku Board
         SudokuBoard(
-            cellStates = uiState.cellStates,
+            cells = uiState.cells,
             onCellClick = { row, col ->
                 onAction(PlayAction.CellSelect(row, col))
             }
@@ -105,7 +141,7 @@ private fun GameHeader(
 
 @Composable
 fun SudokuBoard(
-    cellStates: Array<Array<CellUIState>>,
+    cells: Array<Array<Cell>>, // Changed from cellStates to cells
     onCellClick: (Int, Int) -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -120,7 +156,7 @@ fun SudokuBoard(
                 Row {
                     for (boxCol in 0..2) {
                         SudokuBox(
-                            cellStates = cellStates,
+                            cells = cells, // Changed parameter name
                             boxRow = boxRow,
                             boxCol = boxCol,
                             onCellClick = onCellClick
@@ -150,7 +186,7 @@ fun SudokuBoard(
 
 @Composable
 fun SudokuBox(
-    cellStates: Array<Array<CellUIState>>,
+    cells: Array<Array<Cell>>,
     boxRow: Int,
     boxCol: Int,
     onCellClick: (Int, Int) -> Unit
@@ -161,7 +197,7 @@ fun SudokuBox(
                 for (cellCol in 0..2) {
                     val actualRow = boxRow * 3 + cellRow
                     val actualCol = boxCol * 3 + cellCol
-                    val cell = cellStates[actualRow][actualCol]
+                    val cell = cells[actualRow][actualCol]
 
                     SudokuCell(
                         cell = cell,
@@ -175,7 +211,7 @@ fun SudokuBox(
 
 @Composable
 fun SudokuCell(
-    cell: CellUIState,
+    cell: Cell, // Now uses Cell directly instead of CellUIState
     onClick: () -> Unit
 ) {
     Box(
@@ -199,15 +235,25 @@ fun SudokuCell(
             .clickable { onClick() },
         contentAlignment = Alignment.Center
     ) {
-        if (cell.isVisible && cell.value != 0) {
+        if (!cell.isEditable && cell.userValue == null) {
             Text(
-                text = cell.value.toString(),
+                text = cell.value.toString() ?: "",
                 style = MaterialTheme.typography.bodyLarge,
-                fontWeight = if (cell.isEditable) FontWeight.Normal else FontWeight.Bold,
-                color = if (cell.isEditable)
+                fontWeight = FontWeight.Bold,
+                color = MaterialTheme.colorScheme.onSurface
+            )
+        } else {
+            Text(
+                text = if(cell.userValue == null){
+                    ""
+                } else cell.userValue.toString(),
+                style = MaterialTheme.typography.bodyLarge,
+                fontWeight = FontWeight.Normal,
+                color = if(cell.userValue == cell.value){
                     MaterialTheme.colorScheme.primary
-                else
-                    MaterialTheme.colorScheme.onSurface
+                } else {
+                    MaterialTheme.colorScheme.error
+                }
             )
         }
     }

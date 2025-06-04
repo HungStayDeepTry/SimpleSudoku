@@ -3,7 +3,7 @@ package hung.deptrai.simplesudoku.common
 data class SudokuGame(
     var id: String,
     val cells: Array<Array<Cell>>,
-    var timeElapsed: String = "00:00", // Format: MM:SS hoặc HH:MM:SS
+    var timeElapsed: Long = 0L, // Format: MM:SS hoặc HH:MM:SS
     var difficulty: Difficulty,
     var gameStatus: GameStatus = GameStatus.ONGOING,
     var errorCount: Int = 0,

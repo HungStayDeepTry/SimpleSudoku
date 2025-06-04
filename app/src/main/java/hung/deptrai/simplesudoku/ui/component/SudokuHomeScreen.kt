@@ -21,11 +21,11 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import hung.deptrai.simplesudoku.common.Difficulty
+import hung.deptrai.simplesudoku.viewmodel.HomeAction
 
 @Composable
 fun HomeScreen(
-    onNewGameClick: (Difficulty) -> Unit,
-    onContinueClick: () -> Unit
+    onGameEvent: (HomeAction) -> Unit
 ) {
     var showDialog by remember { mutableStateOf(false) }
 
@@ -50,7 +50,9 @@ fun HomeScreen(
             )
 
             Button(
-                onClick = { showDialog = true },
+                onClick = {
+                    showDialog = true
+                },
                 modifier = Modifier
                     .height(50.dp)
                     .width(200.dp)
@@ -59,7 +61,7 @@ fun HomeScreen(
             }
 
             Button(
-                onClick = { onContinueClick() },
+                onClick = {  },
                 modifier = Modifier
                     .height(50.dp)
                     .width(200.dp)
@@ -68,14 +70,12 @@ fun HomeScreen(
             }
         }
 
-        if (showDialog) {
-            DifficultyDialog(
-                onDismiss = { showDialog = false },
-                onConfirm = { difficulty ->
-                    showDialog = false
-                    onNewGameClick(difficulty)
-                }
-            )
-        }
+        DifficultyLauncher(
+            triggerDialog = showDialog,
+            onDismiss = { showDialog = false },
+            onDifficultySelected = { difficulty ->
+                onGameEvent(HomeAction.onPlayGame(difficulty))
+            }
+        )
     }
 }
