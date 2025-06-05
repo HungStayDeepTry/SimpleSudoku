@@ -5,14 +5,19 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.grid.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Clear
+import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.window.Dialog
+import hung.deptrai.simplesudoku.R
 import hung.deptrai.simplesudoku.common.Cell
+import hung.deptrai.simplesudoku.common.Difficulty
 import hung.deptrai.simplesudoku.viewmodel.HomeAction
 import hung.deptrai.simplesudoku.viewmodel.PlayAction
 import hung.deptrai.simplesudoku.viewmodel.SudokuUiState
@@ -26,6 +31,7 @@ fun SudokuGameScreen(
     onGameEvent: (HomeAction) -> Unit
 ) {
     var showDifficultyDialog by remember { mutableStateOf(false) }
+    var showPauseDialog by remember { mutableStateOf(false) }
     var hasHandledResult by remember { mutableStateOf(false) }
 
     // Khi trạng thái game thay đổi, reset lại flag
@@ -49,7 +55,18 @@ fun SudokuGameScreen(
             }
         )
     }
-
+    if (showPauseDialog) {
+        PauseDialog(
+            timeElapsed = uiState.timeElapsed,
+            difficulty = uiState.difficulty,
+            errorCount = uiState.errorCount,
+            maxErrors = uiState.maxErrors,
+            onContinue = {
+                showPauseDialog = false
+                onAction(PlayAction.ResumeGame)
+            }
+        )
+    }
 
     Column(
         modifier = modifier
@@ -69,7 +86,12 @@ fun SudokuGameScreen(
         GameHeader(
             errorCount = uiState.errorCount,
             maxErrors = uiState.maxErrors,
-            timeElapsed = uiState.timeElapsed
+            timeElapsed = uiState.timeElapsed,
+            onPauseClick = {
+                showPauseDialog = true
+                onAction(PlayAction.PauseGame(parseTimeElapsed(uiState.timeElapsed)))
+            },
+            isPaused = uiState.isGamePaused
         )
 
         Spacer(modifier = Modifier.height(16.dp))
@@ -104,7 +126,9 @@ fun SudokuGameScreen(
 private fun GameHeader(
     errorCount: Int,
     maxErrors: Int,
-    timeElapsed: String
+    timeElapsed: String,
+    isPaused: Boolean,
+    onPauseClick: () -> Unit
 ) {
     Row(
         modifier = Modifier
@@ -125,16 +149,37 @@ private fun GameHeader(
             )
         }
 
-        // Timer
-        Card(
-            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primaryContainer)
+        // Timer with Pause Button
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
         ) {
-            Text(
-                text = timeElapsed,
-                modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
-                style = MaterialTheme.typography.titleMedium,
-                color = MaterialTheme.colorScheme.onPrimaryContainer
-            )
+            Card(
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primaryContainer)
+            ) {
+                Text(
+                    text = timeElapsed,
+                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
+                    style = MaterialTheme.typography.titleMedium,
+                    color = MaterialTheme.colorScheme.onPrimaryContainer
+                )
+            }
+
+            // Pause/Resume Button
+            IconButton(
+                onClick = onPauseClick,
+                modifier = Modifier
+                    .background(
+                        color = MaterialTheme.colorScheme.secondaryContainer,
+                        shape = MaterialTheme.shapes.small
+                    )
+            ) {
+                Icon(
+                    painter = if (isPaused) painterResource(R.drawable.baseline_play_arrow_24) else painterResource(R.drawable.baseline_pause_24),
+                    contentDescription = if (isPaused) "Resume" else "Pause",
+                    tint = MaterialTheme.colorScheme.onSecondaryContainer
+                )
+            }
         }
     }
 }
@@ -317,5 +362,165 @@ fun NumberInputPanel(
                 }
             }
         }
+    }
+}
+@Composable
+fun PauseDialog(
+    timeElapsed: String,
+    difficulty: Difficulty,
+    errorCount: Int,
+    maxErrors: Int,
+    onContinue: () -> Unit
+) {
+    Dialog(onDismissRequest = { /* Không cho dismiss bằng cách click ngoài */ }) {
+        Card(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp),
+            colors = CardDefaults.cardColors(
+                containerColor = MaterialTheme.colorScheme.surface
+            )
+        ) {
+            Column(
+                modifier = Modifier.padding(24.dp),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.spacedBy(16.dp)
+            ) {
+                // Title
+                Text(
+                    text = "Game Paused",
+                    style = MaterialTheme.typography.headlineSmall,
+                    color = MaterialTheme.colorScheme.onSurface,
+                    fontWeight = FontWeight.Bold
+                )
+
+                Divider()
+
+                // Game Stats
+                Column(
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    // Time Elapsed
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(
+                            text = "Time:",
+                            style = MaterialTheme.typography.bodyLarge,
+                            color = MaterialTheme.colorScheme.onSurface
+                        )
+                        Card(
+                            colors = CardDefaults.cardColors(
+                                containerColor = MaterialTheme.colorScheme.primaryContainer
+                            )
+                        ) {
+                            Text(
+                                text = timeElapsed,
+                                modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
+                                style = MaterialTheme.typography.titleMedium,
+                                color = MaterialTheme.colorScheme.onPrimaryContainer,
+                                fontWeight = FontWeight.Bold
+                            )
+                        }
+                    }
+
+                    // Difficulty
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(
+                            text = "Difficulty:",
+                            style = MaterialTheme.typography.bodyLarge,
+                            color = MaterialTheme.colorScheme.onSurface
+                        )
+                        Card(
+                            colors = CardDefaults.cardColors(
+                                containerColor = when(difficulty) {
+                                    Difficulty.Beginner -> Color(0xFF4CAF50).copy(alpha = 0.2f)
+                                    Difficulty.Intermediate -> Color(0xFFFF9800).copy(alpha = 0.2f)
+                                    Difficulty.Advanced -> Color(0xFFF44336).copy(alpha = 0.2f)
+                                }
+                            )
+                        ) {
+                            Text(
+                                text = difficulty.name,
+                                modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
+                                style = MaterialTheme.typography.titleMedium,
+                                color = when(difficulty) {
+                                    Difficulty.Beginner -> Color(0xFF2E7D32)
+                                    Difficulty.Intermediate -> Color(0xFFE65100)
+                                    Difficulty.Advanced -> Color(0xFFC62828)
+                                },
+                                fontWeight = FontWeight.Bold
+                            )
+                        }
+                    }
+
+                    // Errors
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(
+                            text = "Errors:",
+                            style = MaterialTheme.typography.bodyLarge,
+                            color = MaterialTheme.colorScheme.onSurface
+                        )
+                        Card(
+                            colors = CardDefaults.cardColors(
+                                containerColor = MaterialTheme.colorScheme.errorContainer
+                            )
+                        ) {
+                            Text(
+                                text = "$errorCount/$maxErrors",
+                                modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
+                                style = MaterialTheme.typography.titleMedium,
+                                color = MaterialTheme.colorScheme.onErrorContainer,
+                                fontWeight = FontWeight.Bold
+                            )
+                        }
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(8.dp))
+
+                // Continue Button
+                Button(
+                    onClick = onContinue,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(48.dp),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = MaterialTheme.colorScheme.primary
+                    )
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.PlayArrow,
+                        contentDescription = null,
+                        modifier = Modifier.size(20.dp)
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text(
+                        text = "Continue Game",
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold
+                    )
+                }
+            }
+        }
+    }
+}
+fun parseTimeElapsed(time: String): Long {
+    val parts = time.split(":").map { it.toIntOrNull() ?: 0 }
+    return when (parts.size) {
+        2 -> parts[0] * 60L + parts[1] // mm:ss
+        3 -> parts[0] * 3600L + parts[1] * 60L + parts[2] // hh:mm:ss
+        else -> 0L
     }
 }

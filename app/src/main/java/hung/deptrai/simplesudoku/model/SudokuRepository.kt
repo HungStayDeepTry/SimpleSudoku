@@ -13,15 +13,11 @@ import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 class SudokuRepository @Inject constructor(
-    private val store: SudokuStore,
-    private val timer: GameTimer
+    private val store: SudokuStore
 ){
     private val _sudokuGame = MutableSharedFlow<SudokuGame>()
     val sudokuGame = _sudokuGame.asSharedFlow()
 
-    // Flow riêng cho elapsed time
-    private val _elapsedTime = MutableSharedFlow<Long>()
-    val elapsedTime = _elapsedTime.asSharedFlow()
 
     private val cells: Array<Array<Cell>> = Array(9) { row ->
         Array(9) { col ->
@@ -49,18 +45,9 @@ class SudokuRepository @Inject constructor(
 
     private val scope = CoroutineScope(Dispatchers.Default)
 
-    init {
-        // Subscribe elapsed time từ Store
-        scope.launch {
-            timer.currentTime.collectLatest {
-                _elapsedTime.emit(it)
-            }
-        }
-    }
 
     fun startNewGame(difficulty: Difficulty) {
         store.startNewGame(difficulty)
-        timer.start()
         updateGameFromStore()
     }
 
@@ -88,8 +75,8 @@ class SudokuRepository @Inject constructor(
         updateGameFromStore()
     }
 
-    fun pauseGame() {
-        store.pauseGame()
+    fun pauseGame(elapsedTime: Long) {
+        store.pauseGame(elapsedTime)
         updateGameFromStore()
     }
 
@@ -142,13 +129,6 @@ class SudokuRepository @Inject constructor(
             }
         }
     }
-
-    private fun stopTimer(){
-        if(game.gameStatus == GameStatus.COMPLETED || game.gameStatus == GameStatus.FINISHED){
-            timer.pause()
-        }
-    }
-    ///
 
     private fun emitGame() {
         scope.launch {

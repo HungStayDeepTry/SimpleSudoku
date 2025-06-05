@@ -9,53 +9,49 @@ import javax.inject.Inject
 class GameTimer @Inject constructor(
     @ApplicationScope private val scope: CoroutineScope
 ) {
-    private var startTime: Long = 0L
-    private var accumulated: Long = 0L
+    private var startTime = 0L
+    private var running = false
     private var timerJob: Job? = null
-    private var running: Boolean = false
 
-    private val _currentTime = MutableStateFlow(0L)
-    val currentTime: StateFlow<Long> get() = _currentTime
+    private val _accumulated = MutableStateFlow(0L)
+    val accumulated: StateFlow<Long> get() = _accumulated
 
     fun start() {
+        _accumulated.value = 0L
         startTime = System.currentTimeMillis()
-        accumulated = 0L
         running = true
         startTimer()
     }
 
-    fun resume(startFrom: Long, accumulatedMillis: Long) {
-        startTime = startFrom
-        accumulated = accumulatedMillis
+    fun resume() {
+        startTime = System.currentTimeMillis()
         running = true
         startTimer()
     }
 
-    fun pause(): Pair<Long, String> {
+    fun pause(): Long {
         if (running) {
-            accumulated += System.currentTimeMillis() - startTime
+            val now = System.currentTimeMillis()
+            _accumulated.value += now - startTime
             running = false
             timerJob?.cancel()
-            timerJob = null
         }
-        val millis = accumulated
-        return millis to formatTime(millis)
+        return _accumulated.value
     }
-
-    fun getElapsedMillis(): Long =
-        if (running) accumulated + (System.currentTimeMillis() - startTime) else accumulated
-
-    fun getFormattedElapsed(): String = formatTime(getElapsedMillis())
 
     private fun startTimer() {
         timerJob?.cancel()
         timerJob = scope.launch {
             while (isActive && running) {
-                _currentTime.value = getElapsedMillis()
+                val now = System.currentTimeMillis()
+                _accumulated.value += (now - startTime)
+                startTime = now
                 delay(1000L)
             }
         }
     }
+
+    fun getFormattedElapsed(): String = formatTime(_accumulated.value)
 
     private fun formatTime(millis: Long): String {
         val seconds = (millis / 1000) % 60

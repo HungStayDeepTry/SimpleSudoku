@@ -186,10 +186,12 @@ class SudokuStore @Inject constructor(
         updateElapsedTime()
     }
 
-    fun pauseGame() {
+    fun pauseGame(elapsedTime: Long) {
         val game = currentGame ?: return
 //        game.timeElapsed = gameTimer.pause()
+        game.timeElapsed = elapsedTime
         game.gameStatus = GameStatus.PAUSED
+
         stopElapsedTimeUpdates()
         // Emit paused time
 //        scope.launch { _elapsedTime.emit(game.timeElapsed) }
