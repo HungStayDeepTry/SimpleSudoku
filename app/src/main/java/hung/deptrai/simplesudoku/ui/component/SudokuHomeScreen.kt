@@ -20,7 +20,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
-import hung.deptrai.simplesudoku.common.Difficulty
 import hung.deptrai.simplesudoku.viewmodel.HomeAction
 
 @Composable

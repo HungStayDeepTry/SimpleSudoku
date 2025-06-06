@@ -12,7 +12,6 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import hung.deptrai.simplesudoku.common.Difficulty
 import hung.deptrai.simplesudoku.viewmodel.SudokuViewModel
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
 @Composable
@@ -20,7 +19,7 @@ fun AppNavHost(modifier: Modifier = Modifier) {
     val navController = rememberNavController()
     val vm = hiltViewModel<SudokuViewModel>()
     val uiState by vm.uiState.collectAsState()
-    val selectedCell by vm.selectedCell.collectAsState()
+    val selectedCell by vm.internalState.collectAsState()
     NavHost(
         navController,
         startDestination = "splash"
@@ -49,7 +48,7 @@ fun AppNavHost(modifier: Modifier = Modifier) {
                 onAction = {
                     vm.onPlayEvent(it)
                 },
-                selectedCell = selectedCell,
+                selectedCell = selectedCell.selectedCell,
                 onGameEvent = {
                     vm.onGameEvent(it)
                 }

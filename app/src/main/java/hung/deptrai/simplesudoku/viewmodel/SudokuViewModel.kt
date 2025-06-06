@@ -1,5 +1,6 @@
 package hung.deptrai.simplesudoku.viewmodel
 
+import android.annotation.SuppressLint
 import androidx.core.graphics.component1
 import androidx.core.graphics.component2
 import androidx.lifecycle.ViewModel
@@ -12,11 +13,13 @@ import hung.deptrai.simplesudoku.common.SudokuGame
 import hung.deptrai.simplesudoku.model.GameTimer
 import hung.deptrai.simplesudoku.model.SudokuRepository
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.collectLatest
-import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
@@ -26,71 +29,53 @@ class SudokuViewModel @Inject constructor(
     private val timer: GameTimer
 ) : ViewModel() {
 
-    private val _selectedCell = MutableStateFlow(Triple(-1, -1, 0))
-    val selectedCell: StateFlow<Triple<Int, Int, Int>> = _selectedCell.asStateFlow()
+    private val _internalState = MutableStateFlow(SudokuViewInternalState())
+    val internalState: StateFlow<SudokuViewInternalState> = _internalState.asStateFlow()
 
-    // Tách riêng timer state để tránh bị override
-    private val _timerState = MutableStateFlow("00:00")
-
-    private val _gameState = MutableStateFlow(SudokuGameState())
-
-    // Combine timer và game state thành UI state
-    val uiState: StateFlow<SudokuUiState> = combine(
-        _gameState,
-        _timerState
-    ) { gameState, timerText ->
+    val uiState: StateFlow<SudokuUiState> = internalState.map { state ->
         SudokuUiState(
-            cells = gameState.cells,
-            errorCount = gameState.errorCount,
-            maxErrors = gameState.maxErrors,
-            timeElapsed = timerText, // Luôn dùng timer state, không bị override
-            isGameCompleted = gameState.isGameCompleted,
-            isGamePaused = gameState.isGamePaused,
-            isGameFailed = gameState.isGameFailed,
-            difficulty = gameState.difficulty
+            cells = state.gameState.cells,
+            errorCount = state.gameState.errorCount,
+            maxErrors = state.gameState.maxErrors,
+            timeElapsed = state.timerText,
+            isGameCompleted = state.gameState.isGameCompleted,
+            isGamePaused = state.gameState.isGamePaused,
+            isGameFailed = state.gameState.isGameFailed,
+            difficulty = state.gameState.difficulty,
+            isNoteMode = state.isNoteMode
         )
-    }.stateIn(
-        scope = viewModelScope,
-        started = kotlinx.coroutines.flow.SharingStarted.WhileSubscribed(5000),
-        initialValue = SudokuUiState()
-    )
+    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), SudokuUiState())
 
     init {
         viewModelScope.launch {
             repo.sudokuGame.collectLatest { game ->
                 updateGameState(game)
-                _selectedCell.value = repo.getSelectedCell()
             }
         }
 
         viewModelScope.launch {
             timer.accumulated.collectLatest { timeMillis ->
-                val format = formatTimeElapsed(timeMillis / 1000)
-                _timerState.value = format // Chỉ update timer state
+                _internalState.update {
+                    it.copy(timerText = formatTimeElapsed(timeMillis / 1000))
+                }
             }
         }
     }
 
     fun onPlayEvent(action: PlayAction) {
         when (action) {
-            is PlayAction.CellSelect -> {
-                repo.selectCell(action.row, action.col)
+            is PlayAction.CellSelect -> repo.selectCell(action.row, action.col)
+            is PlayAction.CellFill -> withSelectedCell { row, col ->
+                repo.makeMove(row, col, action.value)
             }
-            is PlayAction.CellFill -> {
-                val (row, col, _) = _selectedCell.value
-                if (row != -1 && col != -1) {
-                    repo.makeMove(row, col, action.value)
-                }
+            is PlayAction.CellErase -> withSelectedCell { row, col ->
+                repo.cellErase(row, col)
             }
-            is PlayAction.CellErase -> {
-                val (row, col, _) = _selectedCell.value
-                if (row != -1 && col != -1) {
-                    repo.makeMove(row, col, 0)
-                }
+            is PlayAction.RequestHint -> withSelectedCell { row, col ->
+                repo.giveHint(row, col)
             }
-            is PlayAction.RequestHint -> {
-                val (row, col, _) = _selectedCell.value
-                if (row != -1 && col != -1) repo.giveHint(row, col)
+            is PlayAction.CellNote -> withSelectedCell { row, col ->
+                repo.toggleNote(row, col, action.value)
             }
             is PlayAction.RestartGame -> repo.resetGame()
             is PlayAction.PauseGame -> {
@@ -101,59 +86,63 @@ class SudokuViewModel @Inject constructor(
                 timer.resume()
                 repo.resumeGame()
             }
-            else -> {}
+            is PlayAction.ToggleNoteMode -> {
+                toggleNoteMode()
+            }
         }
     }
 
-    fun onGameEvent(action: HomeAction){
-        when(action){
-            is HomeAction.onPlayGame -> startNewGame(action.diff)
+    fun onGameEvent(action: HomeAction) {
+        if (action is HomeAction.onPlayGame) {
+            startNewGame(action.diff)
         }
     }
 
-    private fun startNewGame(difficulty: Difficulty){
-        _timerState.value = "00:00" // Reset timer display
+    private fun toggleNoteMode() {
+        _internalState.update { it.copy(isNoteMode = !it.isNoteMode) }
+    }
+    private fun startNewGame(difficulty: Difficulty) {
+        _internalState.update { it.copy(timerText = "00:00") }
         repo.startNewGame(difficulty)
         timer.start()
     }
 
-    fun onCellClick(row: Int, col: Int) {
-        repo.selectCell(row, col)
-    }
-
-    fun onNumberInput(number: Int) {
-        val (row, col, _) = _selectedCell.value
-        if (row != -1 && col != -1) {
-            repo.makeMove(row, col, number)
-        }
-    }
-
-    fun onEraseClick() {
-        val (row, col, _) = _selectedCell.value
-        if (row != -1 && col != -1) {
-            repo.makeMove(row, col, 0)
-        }
-    }
-
     private fun updateGameState(game: SudokuGame) {
-        _gameState.value = _gameState.value.copy(
-            cells = game.cells,
-            errorCount = game.errorCount,
-            maxErrors = game.maxErrors,
-            isGameCompleted = game.gameStatus == GameStatus.COMPLETED,
-            isGamePaused = game.gameStatus == GameStatus.PAUSED,
-            isGameFailed = game.gameStatus == GameStatus.FINISHED,
-            difficulty = game.difficulty
-        )
+        _internalState.update {
+            it.copy(
+                gameState = SudokuGameState(
+                    cells = game.cells,
+                    errorCount = game.errorCount,
+                    maxErrors = game.maxErrors,
+                    isGameCompleted = game.gameStatus == GameStatus.COMPLETED,
+                    isGamePaused = game.gameStatus == GameStatus.PAUSED,
+                    isGameFailed = game.gameStatus == GameStatus.FINISHED,
+                    difficulty = game.difficulty
+                ),
+                selectedCell = repo.getSelectedCell()
+            )
+        }
+    }
+
+    private inline fun withSelectedCell(block: (Int, Int) -> Unit) {
+        val (row, col, _) = _internalState.value.selectedCell
+        if (row != -1 && col != -1) block(row, col)
     }
 }
 
-// Tách riêng game state (không có timer)
+// ---------------------------
+// Internal State Container
+// ---------------------------
+data class SudokuViewInternalState(
+    val gameState: SudokuGameState = SudokuGameState(),
+    val timerText: String = "00:00",
+    val selectedCell: Triple<Int, Int, Int> = Triple(-1, -1, 0),
+    val isNoteMode: Boolean = false
+)
+
 data class SudokuGameState(
     val cells: Array<Array<Cell>> = Array(9) { row ->
-        Array(9) { col ->
-            Cell(row, col, 0, false, true, null, false, false)
-        }
+        Array(9) { col -> Cell(row, col, 0, false, true, null, false, false) }
     },
     val errorCount: Int = 0,
     val maxErrors: Int = 3,
@@ -161,42 +150,11 @@ data class SudokuGameState(
     val isGamePaused: Boolean = false,
     val isGameFailed: Boolean = false,
     val difficulty: Difficulty = Difficulty.Beginner
-) {
-    override fun equals(other: Any?): Boolean {
-        if (this === other) return true
-        if (javaClass != other?.javaClass) return false
+)
 
-        other as SudokuGameState
-
-        if (!cells.contentDeepEquals(other.cells)) return false
-        if (errorCount != other.errorCount) return false
-        if (maxErrors != other.maxErrors) return false
-        if (isGameCompleted != other.isGameCompleted) return false
-        if (isGamePaused != other.isGamePaused) return false
-        if (isGameFailed != other.isGameFailed) return false
-        if (difficulty != other.difficulty) return false
-
-        return true
-    }
-
-    override fun hashCode(): Int {
-        var result = cells.contentDeepHashCode()
-        result = 31 * result + errorCount
-        result = 31 * result + maxErrors
-        result = 31 * result + isGameCompleted.hashCode()
-        result = 31 * result + isGamePaused.hashCode()
-        result = 31 * result + isGameFailed.hashCode()
-        result = 31 * result + difficulty.hashCode()
-        return result
-    }
-}
-
-// UI State giữ nguyên nhưng được tạo từ combine
 data class SudokuUiState(
     val cells: Array<Array<Cell>> = Array(9) { row ->
-        Array(9) { col ->
-            Cell(row, col, 0, false, true, null, false, false)
-        }
+        Array(9) { col -> Cell(row, col, 0, false, true, null, false, false) }
     },
     val errorCount: Int = 0,
     val maxErrors: Int = 3,
@@ -204,39 +162,11 @@ data class SudokuUiState(
     val isGameCompleted: Boolean = false,
     val isGamePaused: Boolean = false,
     val isGameFailed: Boolean = false,
-    val difficulty: Difficulty = Difficulty.Beginner
-) {
-    override fun equals(other: Any?): Boolean {
-        if (this === other) return true
-        if (javaClass != other?.javaClass) return false
+    val difficulty: Difficulty = Difficulty.Beginner,
+    val isNoteMode: Boolean = false
+)
 
-        other as SudokuUiState
-
-        if (!cells.contentDeepEquals(other.cells)) return false
-        if (errorCount != other.errorCount) return false
-        if (maxErrors != other.maxErrors) return false
-        if (timeElapsed != other.timeElapsed) return false
-        if (isGameCompleted != other.isGameCompleted) return false
-        if (isGamePaused != other.isGamePaused) return false
-        if (isGameFailed != other.isGameFailed) return false
-        if (difficulty != other.difficulty) return false
-
-        return true
-    }
-
-    override fun hashCode(): Int {
-        var result = cells.contentDeepHashCode()
-        result = 31 * result + errorCount
-        result = 31 * result + maxErrors
-        result = 31 * result + timeElapsed.hashCode()
-        result = 31 * result + isGameCompleted.hashCode()
-        result = 31 * result + isGamePaused.hashCode()
-        result = 31 * result + isGameFailed.hashCode()
-        result = 31 * result + difficulty.hashCode()
-        return result
-    }
-}
-
+@SuppressLint("DefaultLocale")
 fun formatTimeElapsed(timeElapsedSeconds: Long): String {
     val hours = timeElapsedSeconds / 3600
     val minutes = (timeElapsedSeconds % 3600) / 60

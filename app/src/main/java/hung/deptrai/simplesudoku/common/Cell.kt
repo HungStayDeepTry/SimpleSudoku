@@ -8,5 +8,6 @@ data class Cell(
     var isEditable: Boolean,
     var userValue: Int?,
     var isSelected: Boolean = false,
-    var isHighlighted: Boolean = false
+    var isHighlighted: Boolean = false,
+    var notes: MutableList<Boolean> = MutableList(9) { false }
 )

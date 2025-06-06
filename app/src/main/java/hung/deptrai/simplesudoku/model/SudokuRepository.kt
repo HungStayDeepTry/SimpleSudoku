@@ -8,7 +8,6 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.asSharedFlow
-import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
@@ -60,7 +59,12 @@ class SudokuRepository @Inject constructor(
         return store.getSelectedCell()
     }
 
-    fun makeMove(row: Int, col: Int, value: Int) {
+    fun cellErase(row: Int, col: Int){
+        store.cellErase(row, col)
+        updateGameFromStore()
+    }
+
+    fun makeMove(row: Int, col: Int, value: Int?) {
         store.makeMove(row, col, value)
         updateGameFromStore()
     }
@@ -70,10 +74,10 @@ class SudokuRepository @Inject constructor(
         updateGameFromStore()
     }
 
-    fun undo() {
-        store.undo()
-        updateGameFromStore()
-    }
+//    fun undo() {
+//        store.undo()
+//        updateGameFromStore()
+//    }
 
     fun pauseGame(elapsedTime: Long) {
         store.pauseGame(elapsedTime)
@@ -90,17 +94,22 @@ class SudokuRepository @Inject constructor(
         updateGameFromStore()
     }
 
-    fun loadGame(gameId: String) {
-        val loadedGame = store.loadGame(gameId)
-        if (loadedGame != null) {
-            copyGameData(loadedGame)
-            emitGame()
-        }
+    fun toggleNote(row: Int, col: Int, value: Int){
+        store.toggleNote(row, col, value)
+        updateGameFromStore()
     }
 
-    fun getAllGames(): List<SudokuGame> {
-        return store.getAllGames()
-    }
+//    fun loadGame(gameId: String) {
+//        val loadedGame = store.loadGame(gameId)
+//        if (loadedGame != null) {
+//            copyGameData(loadedGame)
+//            emitGame()
+//        }
+//    }
+//
+//    fun getAllGames(): List<SudokuGame> {
+//        return store.getAllGames()
+//    }
 
     private fun updateGameFromStore() {
         val current = store.getGame() ?: return
@@ -126,6 +135,7 @@ class SudokuRepository @Inject constructor(
                 targetCell.userValue = sourceCell.userValue
                 targetCell.isSelected = sourceCell.isSelected
                 targetCell.isHighlighted = sourceCell.isHighlighted
+                targetCell.notes = sourceCell.notes
             }
         }
     }

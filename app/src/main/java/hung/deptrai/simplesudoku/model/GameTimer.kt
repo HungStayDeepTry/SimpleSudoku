@@ -1,9 +1,13 @@
 package hung.deptrai.simplesudoku.model
 
 import hung.deptrai.simplesudoku.di.ApplicationScope
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.isActive
+import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 class GameTimer @Inject constructor(
@@ -49,14 +53,5 @@ class GameTimer @Inject constructor(
                 delay(1000L)
             }
         }
-    }
-
-    fun getFormattedElapsed(): String = formatTime(_accumulated.value)
-
-    private fun formatTime(millis: Long): String {
-        val seconds = (millis / 1000) % 60
-        val minutes = (millis / (1000 * 60)) % 60
-        val hours = (millis / (1000 * 60 * 60))
-        return String.format("%02d:%02d:%02d", hours, minutes, seconds)
     }
 }

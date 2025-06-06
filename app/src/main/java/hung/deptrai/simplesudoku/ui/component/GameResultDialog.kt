@@ -5,7 +5,6 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import hung.deptrai.simplesudoku.viewmodel.HomeAction
 import hung.deptrai.simplesudoku.viewmodel.SudokuUiState
 
 @Composable
