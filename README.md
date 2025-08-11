@@ -35,7 +35,7 @@ A lightweight and clean Sudoku game built with **Jetpack Compose**, following th
 ## Getting Started
 1. Clone the repository:
     ```bash
-    git clone https://github.com/yourusername/simple-sudoku.git
+    git clone https://github.com/HungStayDeepTry/simple-sudoku.git
     ```
 2. Open in **Android Studio** (Giraffe+ recommended)
 3. Sync Gradle and run on Android 5.0+ device/emulator
