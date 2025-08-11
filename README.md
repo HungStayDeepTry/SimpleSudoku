@@ -17,8 +17,11 @@ A lightweight and clean Sudoku game built with **Jetpack Compose**, following th
 - **ViewModel & StateFlow** – Reactive state management
 
 ## Screenshots
-<img width="1080" height="2400" alt="Screenshot_20250811_213653" src="https://github.com/user-attachments/assets/9bfb68b5-3b4a-4946-8ef9-153b6ae5ecb9" />
-<img width="1080" height="2400" alt="Screenshot_20250811_213736" src="https://github.com/user-attachments/assets/05ee7273-d4fe-4e01-9e6d-731d3d2e3a51" />
+
+<p align="center">
+  <img src="https://github.com/user-attachments/assets/9bfb68b5-3b4a-4946-8ef9-153b6ae5ecb9" width="300" style="margin-right:20px;" />
+  <img src="https://github.com/user-attachments/assets/05ee7273-d4fe-4e01-9e6d-731d3d2e3a51" width="300" />
+</p>
 
 ## Roadmap
 - ✅ Difficulty selection
