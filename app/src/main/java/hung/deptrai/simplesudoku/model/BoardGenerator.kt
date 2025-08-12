@@ -6,17 +6,16 @@ import hung.deptrai.simplesudoku.common.Difficulty
 object BoardGenerator {
     private const val BOARD_SIZE = 9
 
-    // Kiểm tra an toàn để đặt num tại vị trí (row, col)
     private fun isSafe(board: Array<IntArray>, row: Int, col: Int, num: Int): Boolean {
-        // Kiểm tra hàng
+
         for (x in 0 until BOARD_SIZE) {
             if (board[row][x] == num) return false
         }
-        // Kiểm tra cột
+
         for (x in 0 until BOARD_SIZE) {
             if (board[x][col] == num) return false
         }
-        // Kiểm tra vùng 3x3
+
         val startRow = row - row % 3
         val startCol = col - col % 3
         for (i in 0 until 3) {
@@ -27,12 +26,11 @@ object BoardGenerator {
         return true
     }
 
-    // Giải board Sudoku bằng backtracking
     private fun solveBoard(board: Array<IntArray>): Boolean {
         for (row in 0 until BOARD_SIZE) {
             for (col in 0 until BOARD_SIZE) {
                 if (board[row][col] == 0) {
-                    val numbers = (1..9).shuffled() // random thứ tự để board đa dạng hơn
+                    val numbers = (1..9).shuffled()
                     for (num in numbers) {
                         if (isSafe(board, row, col, num)) {
                             board[row][col] = num
@@ -47,7 +45,6 @@ object BoardGenerator {
         return true
     }
 
-    // Đếm số lời giải có thể có cho board (dùng để kiểm tra unique solution)
     private fun countSolutions(board: Array<IntArray>): Int {
         var count = 0
 
@@ -69,7 +66,7 @@ object BoardGenerator {
                     }
                 }
             }
-            count++ // Tìm thấy 1 lời giải
+            count++
         }
 
         val copyBoard = board.map { it.clone() }.toTypedArray()
@@ -77,12 +74,10 @@ object BoardGenerator {
         return count
     }
 
-    // Kiểm tra board có duy nhất 1 lời giải không
     private fun hasUniqueSolution(board: Array<IntArray>): Boolean {
         return countSolutions(board) == 1
     }
 
-    // Sinh một bảng Sudoku đầy đủ (solution)
     fun generateFullBoard(): Array<Array<Cell>> {
         val board = Array(BOARD_SIZE) { IntArray(BOARD_SIZE) { 0 } }
         solveBoard(board)
@@ -93,17 +88,16 @@ object BoardGenerator {
                     row = row,
                     col = col,
                     value = board[row][col],
-                    isVisible = true,     // full board: tất cả visible
-                    isEditable = false,   // không cho chỉnh sửa
+                    isVisible = true,
+                    isEditable = false,
                     userValue = null
                 )
             }
         }
     }
 
-    // Tạo puzzle từ full board theo độ khó (số ô trống)
     fun generatePuzzle(cells: Array<Array<Cell>>, diff: Difficulty): Array<Array<Cell>> {
-        // Copy giá trị từ fullBoard ra mảng IntArray để xử lý
+
         val boardInt = Array(BOARD_SIZE) { row ->
             IntArray(BOARD_SIZE) { col -> cells[row][col].value }
         }
@@ -114,7 +108,7 @@ object BoardGenerator {
             Difficulty.Advanced -> (60..65).random()
         }
 
-        // Danh sách vị trí để xóa dần ô
+
         val positions = mutableListOf<Pair<Int, Int>>()
         for (i in 0 until BOARD_SIZE) {
             for (j in 0 until BOARD_SIZE) {
@@ -133,23 +127,22 @@ object BoardGenerator {
             boardInt[row][col] = 0
 
             if (!hasUniqueSolution(boardInt)) {
-                boardInt[row][col] = backup // hoàn tác nếu không unique solution
+                boardInt[row][col] = backup
             } else {
                 cellsToHide.add(row to col)
                 removed++
             }
         }
 
-        // Tạo lại mảng cells - giữ nguyên value, chỉ thay đổi isEditable và isVisible
         return Array(BOARD_SIZE) { row ->
             Array(BOARD_SIZE) { col ->
                 val isHidden = cellsToHide.contains(row to col)
                 Cell(
                     row = row,
                     col = col,
-                    value = cells[row][col].value, // Giữ nguyên value từ fullBoard
-                    isVisible = !isHidden,         // ô bị hide thì không visible
-                    isEditable = isHidden,         // ô bị hide thì cho phép edit
+                    value = cells[row][col].value,
+                    isVisible = !isHidden,
+                    isEditable = isHidden,
                     userValue = null
                 )
             }

@@ -31,7 +31,6 @@ fun NumberInputPanel(
         horizontalArrangement = Arrangement.spacedBy(8.dp),
         verticalArrangement = Arrangement.spacedBy(8.dp)
     ) {
-        // Numbers 1-9
         items(9) { index ->
             val number = index + 1
             Card(
@@ -55,7 +54,6 @@ fun NumberInputPanel(
             }
         }
 
-        // Erase button
         item {
             Card(
                 modifier = Modifier

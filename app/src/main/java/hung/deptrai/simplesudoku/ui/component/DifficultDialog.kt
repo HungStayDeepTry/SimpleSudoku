@@ -18,7 +18,9 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import hung.deptrai.simplesudoku.R
 import hung.deptrai.simplesudoku.common.Difficulty
 
 @Composable
@@ -31,7 +33,7 @@ fun DifficultyDialog(
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(Color.Black.copy(alpha = 0.4f))
+            .background(Color.Transparent)
             .clickable(onClick = onDismiss),
         contentAlignment = Alignment.Center
     ) {
@@ -39,15 +41,15 @@ fun DifficultyDialog(
             modifier = Modifier
                 .width(300.dp)
                 .clip(RoundedCornerShape(16.dp))
-                .background(Color.White)
+                .background(MaterialTheme.colorScheme.onBackground)
                 .padding(24.dp)
-                .clickable(enabled = false) {}, // tránh bị dismiss khi bấm bên trong
+                .clickable(enabled = false) {},
         ) {
             Column(horizontalAlignment = Alignment.CenterHorizontally) {
                 Text(
-                    text = "Chọn độ khó",
+                    text = stringResource(R.string.difficulty_dialog_title),
                     style = MaterialTheme.typography.titleLarge,
-                    color = Color(0xFF57370D)
+                    color = MaterialTheme.colorScheme.background
                 )
 
                 Spacer(modifier = Modifier.height(16.dp))
@@ -65,9 +67,9 @@ fun DifficultyDialog(
                     ) {
                         Text(
                             text = when (option) {
-                                Difficulty.Beginner -> "Dễ"
-                                Difficulty.Intermediate -> "Trung bình"
-                                Difficulty.Advanced -> "Khó"
+                                Difficulty.Beginner -> stringResource(R.string.difficulty_easy)
+                                Difficulty.Intermediate -> stringResource(R.string.difficulty_medium)
+                                Difficulty.Advanced -> stringResource(R.string.difficulty_hard)
                             },
                             color = Color(0xFF57370D),
                             style = MaterialTheme.typography.bodyLarge

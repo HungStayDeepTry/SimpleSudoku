@@ -16,6 +16,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import hung.deptrai.simplesudoku.R
 
@@ -40,7 +41,6 @@ fun GameHeader(
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(8.dp)
         ) {
-            // Error Count
             Card(
                 colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.errorContainer)
             ) {
@@ -52,7 +52,6 @@ fun GameHeader(
                 )
             }
 
-            // Note Toggle
             Card(
                 modifier = Modifier
                     .clickable(onClick = onToggleNoteMode),
@@ -61,7 +60,7 @@ fun GameHeader(
                 )
             ) {
                 Text(
-                    text = "Note",
+                    text = stringResource(R.string.note),
                     modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
                     style = MaterialTheme.typography.titleMedium,
                     color = if (isNoteMode) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface
@@ -69,7 +68,6 @@ fun GameHeader(
             }
         }
 
-        // Timer with Pause Button
         Row(
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(8.dp)
@@ -85,7 +83,6 @@ fun GameHeader(
                 )
             }
 
-            // Pause/Resume Button
             IconButton(
                 onClick = onPauseClick,
                 modifier = Modifier
@@ -96,7 +93,8 @@ fun GameHeader(
             ) {
                 Icon(
                     painter = if (isPaused) painterResource(R.drawable.baseline_play_arrow_24) else painterResource(
-                        R.drawable.baseline_pause_24),
+                        R.drawable.baseline_pause_24
+                    ),
                     contentDescription = if (isPaused) "Resume" else "Pause",
                     tint = MaterialTheme.colorScheme.onSecondaryContainer
                 )

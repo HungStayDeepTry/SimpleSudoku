@@ -66,7 +66,8 @@ class SudokuStore @Inject constructor(
         for (row in 0..8) {
             for (col in 0..8) {
                 if (row != selectedRow || col != selectedCol) {
-                    game.cells[row][col].isHighlighted = isHighlighted(row, col, selectedRow, selectedCol)
+                    game.cells[row][col].isHighlighted =
+                        isHighlighted(row, col, selectedRow, selectedCol)
                 }
             }
         }
@@ -85,7 +86,7 @@ class SudokuStore @Inject constructor(
         return Triple(selectedRow, selectedCol, value)
     }
 
-    fun cellErase(row: Int, col: Int){
+    fun cellErase(row: Int, col: Int) {
         val game = currentGame ?: return
         if (game.gameStatus != GameStatus.ONGOING) return
 
@@ -104,7 +105,6 @@ class SudokuStore @Inject constructor(
 
         cell.notes = MutableList(9) { false }
 
-        // Lưu move vào stack
         moveStack.push(Move(row, col, cell.userValue))
 
         cell.userValue = value
@@ -127,7 +127,6 @@ class SudokuStore @Inject constructor(
         val cell = getCell(row, col) ?: return
         if (!cell.isEditable || number !in 1..9) return
 
-        // Nếu ô đã có userValue, không cho ghi chú nữa
         if (cell.userValue != null) return
 
         val index = number - 1
@@ -147,15 +146,6 @@ class SudokuStore @Inject constructor(
             }
         }
     }
-
-//    fun undo() {
-//        val game = currentGame ?: return
-//        if (game.gameStatus != GameStatus.ONGOING || moveStack.isEmpty()) return
-//
-//        val lastMove = moveStack.pop()
-//        val cell = game.cells[lastMove.row][lastMove.col]
-//        cell.userValue = lastMove.oldUserValue
-//    }
 
     fun pauseGame(elapsedTime: Long) {
         val game = currentGame ?: return
@@ -180,15 +170,6 @@ class SudokuStore @Inject constructor(
         return currentGame?.cells?.getOrNull(row)?.getOrNull(col)
     }
 
-//    fun isCorrectInput(row: Int, col: Int, inputValue: Int): Boolean {
-//        return getCell(row, col)?.value == inputValue
-//    }
-//
-//    fun getRemainingErrors(): Int {
-//        val game = currentGame ?: return 0
-//        return game.maxErrors - game.errorCount + 1
-//    }
-
     private fun isCompleted(game: SudokuGame): Boolean {
         return game.cells.all { row ->
             row.all { cell ->
@@ -201,18 +182,19 @@ class SudokuStore @Inject constructor(
         }
     }
 
-//    fun saveGame(game: SudokuGame) {
-//        // TODO: Lưu vào Room
-//    }
-//
-//    fun loadGame(gameId: String): SudokuGame? {
-//        // TODO: Load từ Room
-//        return null
-//    }
-//
-//    fun getAllGames(): List<SudokuGame> {
-//        // TODO: Lấy toàn bộ game từ Room
-//        return emptyList()
-//    }
+    fun loadGame(game: SudokuGame?) {
+        moveStack.clear()
+        selectedRow = -1
+        selectedCol = -1
 
+        currentGame = game?.copy(
+            cells = Array(9) { row ->
+                Array(9) { col ->
+                    game.cells[row][col].copy(
+                        notes = game.cells[row][col].notes.toMutableList()
+                    )
+                }
+            }
+        )
+    }
 }

@@ -43,6 +43,14 @@ android {
 
 dependencies {
 
+    implementation(libs.androidx.room.runtime)
+    implementation(libs.androidx.room.common.jvm)
+    ksp(libs.androidx.room.compiler) // nếu dùng Java annotation processor
+    implementation(libs.androidx.room.ktx) // coroutine support
+
+    // Gson (nếu dùng cho TypeConverter)
+    implementation(libs.gson)
+
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)
     implementation(libs.androidx.activity.compose)

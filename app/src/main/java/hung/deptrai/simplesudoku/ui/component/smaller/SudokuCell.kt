@@ -15,17 +15,19 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import hung.deptrai.simplesudoku.common.Cell
 
 @Composable
 fun SudokuCell(
     cell: Cell,
+    size: Dp,
     onClick: () -> Unit
 ) {
     Box(
         modifier = Modifier
-            .size(40.dp)
+            .size(size)
             .border(
                 width = 1.dp,
                 color = if (cell.isSelected)

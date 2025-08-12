@@ -31,9 +31,8 @@ fun SplashScreen(
 ) {
     var visible by remember { mutableStateOf(false) }
 
-    // Kích hoạt animation sau khi composable được tạo
     LaunchedEffect(Unit) {
-        delay(100) // delay nhẹ để animation mượt mà hơn
+        delay(100)
         visible = true
         delay(2000)
         navController.navigate("home") {
@@ -43,7 +42,6 @@ fun SplashScreen(
         }
     }
 
-    // Hiệu ứng scale (phóng to nhẹ lên) và alpha (fade-in)
     val scale by animateFloatAsState(
         targetValue = if (visible) 1f else 0.8f,
         animationSpec = tween(durationMillis = 300, easing = FastOutSlowInEasing), label = ""

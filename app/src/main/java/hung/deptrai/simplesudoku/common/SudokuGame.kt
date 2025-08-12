@@ -3,14 +3,12 @@ package hung.deptrai.simplesudoku.common
 data class SudokuGame(
     var id: String,
     val cells: Array<Array<Cell>>,
-    var timeElapsed: Long = 0L, // Format: MM:SS hoặc HH:MM:SS
+    var timeElapsed: Long = 0L,
     var difficulty: Difficulty,
     var gameStatus: GameStatus = GameStatus.ONGOING,
     var errorCount: Int = 0,
     var maxErrors: Int = 2
-)
-{
-    // Override equals và hashCode cho Array comparison
+) {
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
         if (javaClass != other?.javaClass) return false

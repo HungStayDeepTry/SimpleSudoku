@@ -5,6 +5,8 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.res.stringResource
+import hung.deptrai.simplesudoku.R
 import hung.deptrai.simplesudoku.viewmodel.SudokuUiState
 
 @Composable
@@ -14,12 +16,14 @@ fun GameResultDialog(
     onDismissRequest: () -> Unit
 ) {
     if (uiState.isGameCompleted || uiState.isGameFailed) {
-        val title = if (uiState.isGameCompleted) "🎉 Chiến thắng!" else "😢 Thất bại!"
+        val title =
+            if (uiState.isGameCompleted) stringResource(R.string.game_result_win_title) else stringResource(
+                R.string.game_result_lose_title
+            )
         val message = if (uiState.isGameCompleted) {
-            "Bạn đã hoàn thành bảng Sudoku một cách chính xác!"
+            stringResource(R.string.game_result_win_desc)
         } else {
-            "Bạn đã vượt quá số lần sai cho phép. Hãy thử lại nhé!"
-
+            stringResource(R.string.game_result_lose_desc)
         }
 
         AlertDialog(
@@ -43,7 +47,7 @@ fun GameResultDialog(
                         onGameEvent()
                     }
                 ) {
-                    Text("Chơi game mới")
+                    Text(stringResource(R.string.game_result_confirm))
                 }
             }
         )

@@ -4,19 +4,28 @@ import hung.deptrai.simplesudoku.common.Cell
 import hung.deptrai.simplesudoku.common.Difficulty
 import hung.deptrai.simplesudoku.common.GameStatus
 import hung.deptrai.simplesudoku.common.SudokuGame
+import hung.deptrai.simplesudoku.model.SudokuMapper.toEntity
+import hung.deptrai.simplesudoku.model.SudokuMapper.toModel
+import hung.deptrai.simplesudoku.model.room.dao.SudokuDao
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asSharedFlow
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 class SudokuRepository @Inject constructor(
-    private val store: SudokuStore
-){
+    private val store: SudokuStore,
+    private val dao: SudokuDao
+) {
     private val _sudokuGame = MutableSharedFlow<SudokuGame>()
     val sudokuGame = _sudokuGame.asSharedFlow()
 
+    private val _hasUnfinishedGame = MutableStateFlow(false)
+    val hasUnfinishedGame = _hasUnfinishedGame.asStateFlow()
 
     private val cells: Array<Array<Cell>> = Array(9) { row ->
         Array(9) { col ->
@@ -59,7 +68,7 @@ class SudokuRepository @Inject constructor(
         return store.getSelectedCell()
     }
 
-    fun cellErase(row: Int, col: Int){
+    fun cellErase(row: Int, col: Int) {
         store.cellErase(row, col)
         updateGameFromStore()
     }
@@ -73,11 +82,6 @@ class SudokuRepository @Inject constructor(
         store.giveHint(row, col)
         updateGameFromStore()
     }
-
-//    fun undo() {
-//        store.undo()
-//        updateGameFromStore()
-//    }
 
     fun pauseGame(elapsedTime: Long) {
         store.pauseGame(elapsedTime)
@@ -94,22 +98,17 @@ class SudokuRepository @Inject constructor(
         updateGameFromStore()
     }
 
-    fun toggleNote(row: Int, col: Int, value: Int){
+    fun toggleNote(row: Int, col: Int, value: Int) {
         store.toggleNote(row, col, value)
         updateGameFromStore()
     }
 
-//    fun loadGame(gameId: String) {
-//        val loadedGame = store.loadGame(gameId)
-//        if (loadedGame != null) {
-//            copyGameData(loadedGame)
-//            emitGame()
-//        }
-//    }
-//
-//    fun getAllGames(): List<SudokuGame> {
-//        return store.getAllGames()
-//    }
+    suspend fun loadLastUnfinishedGame() {
+        val entity = dao.getLastUnfinishedGame() ?: return
+        store.loadGame(entity.toModel())
+        updateGameFromStore()
+    }
+
 
     private fun updateGameFromStore() {
         val current = store.getGame() ?: return
@@ -150,5 +149,26 @@ class SudokuRepository @Inject constructor(
             }
             _sudokuGame.emit(game.copy(cells = copiedCells))
         }
+    }
+
+    fun saveCurrentGame() {
+        store.getGame()?.let { currentGame ->
+            scope.launch(Dispatchers.IO) {
+                dao.saveGame(currentGame.toEntity())
+            }
+        }
+    }
+
+    fun deleteExistedGame() {
+        scope.launch(Dispatchers.IO) {
+            val entity = dao.getLastUnfinishedGame()
+            if (entity != null)
+                dao.saveGame(entity.copy(gameStatus = GameStatus.FINISHED))
+        }
+    }
+
+    suspend fun hasActiveGameInStore() {
+        val count = dao.countUnfinishedGames()
+        _hasUnfinishedGame.update { count > 0 }
     }
 }

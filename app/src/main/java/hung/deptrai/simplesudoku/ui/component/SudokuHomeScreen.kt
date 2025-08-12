@@ -1,6 +1,5 @@
 package hung.deptrai.simplesudoku.ui.component
 
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -17,25 +16,25 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
-import hung.deptrai.simplesudoku.viewmodel.HomeAction
+import hung.deptrai.simplesudoku.R
+import hung.deptrai.simplesudoku.common.Difficulty
+import hung.deptrai.simplesudoku.viewmodel.SudokuUiState
 
 @Composable
 fun HomeScreen(
-    onGameEvent: (HomeAction) -> Unit
+    onDifficultySelected: (Difficulty) -> Unit,
+    onResumeGame: () -> Unit,
+    onDeleteExistedGame: () -> Unit,
+    uiState: SudokuUiState
 ) {
     var showDialog by remember { mutableStateOf(false) }
+    var showAlertContinuousGame by remember { mutableStateOf(false) }
 
     Box(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(
-                brush = Brush.verticalGradient(
-                    colors = listOf(Color(0xFFFFF0C9), Color(0xFFFFE6AA))
-                )
-            ),
+        modifier = Modifier.fillMaxSize(),
         contentAlignment = Alignment.Center
     ) {
         Column(
@@ -43,29 +42,35 @@ fun HomeScreen(
             verticalArrangement = Arrangement.spacedBy(24.dp)
         ) {
             Text(
-                text = "Sudoku",
+                text = stringResource(R.string.home_title),
                 style = MaterialTheme.typography.headlineLarge,
                 color = Color(0xFF57370D)
             )
 
             Button(
                 onClick = {
-                    showDialog = true
+                    if (uiState.hasUnfinishedGame) {
+                        showAlertContinuousGame = true
+                    } else {
+                        showDialog = true
+                    }
                 },
                 modifier = Modifier
                     .height(50.dp)
                     .width(200.dp)
             ) {
-                Text("Trò chơi mới")
+                Text(stringResource(R.string.home_new_game))
             }
 
-            Button(
-                onClick = {  },
-                modifier = Modifier
-                    .height(50.dp)
-                    .width(200.dp)
-            ) {
-                Text("Tiếp tục chơi")
+            if (uiState.hasUnfinishedGame) {
+                Button(
+                    onClick = onResumeGame,
+                    modifier = Modifier
+                        .height(50.dp)
+                        .width(200.dp)
+                ) {
+                    Text(stringResource(R.string.home_continue_game))
+                }
             }
         }
 
@@ -73,8 +78,20 @@ fun HomeScreen(
             triggerDialog = showDialog,
             onDismiss = { showDialog = false },
             onDifficultySelected = { difficulty ->
-                onGameEvent(HomeAction.onPlayGame(difficulty))
+                showDialog = false
+                onDifficultySelected(difficulty)
             }
         )
+
+        if (showAlertContinuousGame) {
+            ConfirmNewGameDialog(
+                onDismissRequest = { showAlertContinuousGame = false },
+                onConfirmNewGame = {
+                    showAlertContinuousGame = false
+                    onDeleteExistedGame()
+                    showDialog = true
+                }
+            )
+        }
     }
 }

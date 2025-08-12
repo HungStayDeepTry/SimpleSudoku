@@ -1,3 +1,31 @@
 <resources>
+    <string name="note">Note</string>
+    <string name="pause_dialog_title">Game paused</string>
+    <string name="pause_dialog_time_label">Thời gian:</string>
+    <string name="pause_dialog_diff_label">Độ khó:</string>
+    <string name="pause_dialog_error_label">Số Lỗi:</string>
+    <string name="pause_dialog_continue">Tiếp tục chơi</string>
+
+    <string name="alert_continuous_label">Cảnh báo</string>
+    <string name="alert_continuous_title">Còn game cũ chưa hoàn thành. Nếu chơi game mới sẽ mất hết dữ liệu game cũ. Bạn có chắc chắn muốn bắt đầu game mới?</string>
+    <string name="alert_continuous_confirm">Chơi Game mới</string>
+    <string name="alert_continuous_cancel">Hủy</string>
+
+    <string name="difficulty_dialog_title">Chọn độ khó</string>
+    <string name="difficulty_easy">Dễ</string>
+    <string name="difficulty_medium">Trung Bình</string>
+    <string name="difficulty_hard">Khó</string>
+
+    <string name="game_result_win_title">🎉 Chiến thắng!</string>
+    <string name="game_result_lose_title">😢 Thất bại!</string>
+    <string name="game_result_win_desc">Bạn đã hoàn thành bảng Sudoku một cách chính xác!</string>
+    <string name="game_result_lose_desc">Bạn đã vượt quá số lần sai cho phép. Hãy thử lại nhé!</string>
+    <string name="game_result_confirm">Chơi Game mới</string>
+
+    <string name="home_title">Sudoku</string>
+    <string name="home_new_game">Trò chơi mới</string>
+    <string name="home_continue_game">Tiếp tục chơi</string>
+
+    <string name="playing_new_game_button">New Game</string>
     <string name="app_name">SimpleSudoku</string>
 </resources>

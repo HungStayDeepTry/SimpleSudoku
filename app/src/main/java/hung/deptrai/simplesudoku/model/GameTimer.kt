@@ -54,4 +54,9 @@ class GameTimer @Inject constructor(
             }
         }
     }
+
+    fun startFromInitialTime(initTime: Long = 0L) {
+        _accumulated.value = initTime * 1000
+        resume()
+    }
 }
