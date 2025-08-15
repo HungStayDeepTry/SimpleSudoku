@@ -4,24 +4,25 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.onGloballyPositioned
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
 import hung.deptrai.simplesudoku.common.Cell
-import hung.deptrai.simplesudoku.ui.component.smaller.CustomNavBottom
 import hung.deptrai.simplesudoku.ui.component.smaller.GameHeader
 import hung.deptrai.simplesudoku.ui.component.smaller.NumberInputPanel
 import hung.deptrai.simplesudoku.ui.component.smaller.PauseDialog
@@ -37,15 +38,19 @@ fun SudokuGameScreen(
     uiState: SudokuUiState,
     selectedCell: Triple<Int, Int, Int>,
     onAction: (PlayAction) -> Unit,
-    modifier: Modifier = Modifier,
     onGameEvent: (HomeAction) -> Unit,
-    onExit: () -> Unit
+    onExit: () -> Unit,
+    onStopTimer: () -> Unit
 ) {
-    var showDifficultyDialog by remember { mutableStateOf(false) }
-    var showPauseDialog by remember { mutableStateOf(false) }
-    var hasHandledResult by remember { mutableStateOf(false) }
+    var showDifficultyDialog by rememberSaveable { mutableStateOf(false) }
+    var showPauseDialog by rememberSaveable { mutableStateOf(false) }
+    var hasHandledResult by rememberSaveable { mutableStateOf(false) }
 
     var size by remember { mutableStateOf(IntSize.Zero) }
+
+    val density = LocalDensity.current
+    val screenWidth = with(density) { size.width.toDp() } - 48.dp
+    val boardWidth = if (screenWidth <= 450.dp) screenWidth else 400.dp
 
     LaunchedEffect(uiState.isGameCompleted, uiState.isGameFailed) {
         if (!uiState.isGameCompleted && !uiState.isGameFailed) {
@@ -60,6 +65,7 @@ fun SudokuGameScreen(
     }
 
     if ((uiState.isGameCompleted || uiState.isGameFailed) && !hasHandledResult) {
+        onStopTimer()
         GameResultDialog(
             uiState = uiState,
             onGameEvent = {
@@ -81,14 +87,17 @@ fun SudokuGameScreen(
             onContinue = {
                 showPauseDialog = false
                 onAction(PlayAction.ResumeGame)
+            },
+            onClickNewGame = {
+                showPauseDialog = false
+                showDifficultyDialog = true
             }
         )
     }
 
     Column(
-        modifier = modifier
+        modifier = Modifier
             .fillMaxSize()
-            .statusBarsPadding()
             .onGloballyPositioned { coordinates ->
                 size = coordinates.size
             }
@@ -123,7 +132,7 @@ fun SudokuGameScreen(
             isNoteMode = uiState.isNoteMode
         )
 
-        Spacer(modifier = Modifier.height(16.dp))
+        Spacer(modifier = Modifier.height(24.dp))
 
         SudokuBoard(
             cells = uiState.cells,
@@ -133,44 +142,42 @@ fun SudokuGameScreen(
             screenSize = size
         )
 
-        Spacer(modifier = Modifier.height(24.dp))
+        Spacer(modifier = Modifier.height(16.dp))
 
-        NumberInputPanel(
-            onNumberClick = { number ->
-                if (selectedCell.first != -1 && selectedCell.second != -1) {
-                    if (uiState.isNoteMode) {
-                        onAction(
-                            PlayAction.CellNote(
-                                selectedCell.first,
-                                selectedCell.second,
-                                number
+        Column(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            NumberInputPanel(
+                onNumberClick = { number ->
+                    if (selectedCell.first != -1 && selectedCell.second != -1) {
+                        if (uiState.isNoteMode) {
+                            onAction(
+                                PlayAction.CellNote(
+                                    selectedCell.first,
+                                    selectedCell.second,
+                                    number
+                                )
                             )
-                        )
-                    } else {
-                        onAction(
-                            PlayAction.CellFill(
-                                selectedCell.first,
-                                selectedCell.second,
-                                number
+                        } else {
+                            onAction(
+                                PlayAction.CellFill(
+                                    selectedCell.first,
+                                    selectedCell.second,
+                                    number
+                                )
                             )
-                        )
+                        }
                     }
-                }
-            },
-            onEraseClick = {
-                if (selectedCell.first != -1 && selectedCell.second != -1) {
-                    onAction(PlayAction.CellErase(selectedCell.first, selectedCell.second))
-                }
-            }
-        )
-        Spacer(Modifier.height(8.dp))
-        CustomNavBottom(
-            height = 48.dp,
-            text = "New Game",
-            onClick = {
-                showDifficultyDialog = true
-            }
-        )
+                },
+                onEraseClick = {
+                    if (selectedCell.first != -1 && selectedCell.second != -1) {
+                        onAction(PlayAction.CellErase(selectedCell.first, selectedCell.second))
+                    }
+                },
+                boardWidth = boardWidth
+            )
+        }
     }
 }
 

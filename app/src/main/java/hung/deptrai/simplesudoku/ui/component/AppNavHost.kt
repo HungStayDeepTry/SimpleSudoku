@@ -1,7 +1,7 @@
 package hung.deptrai.simplesudoku.ui.component
 
-import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -11,6 +11,9 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
+import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
@@ -31,6 +34,19 @@ fun AppNavHost(modifier: Modifier = Modifier) {
     val navBackStackEntry by navController.currentBackStackEntryAsState()
 
     var previousRoute by remember { mutableStateOf("") }
+    val lifecycleOwner = LocalLifecycleOwner.current
+
+    DisposableEffect(lifecycleOwner) {
+        val observer = LifecycleEventObserver { _, event ->
+            if (event == Lifecycle.Event.ON_PAUSE) {
+                vm.saveGame()
+            }
+        }
+        lifecycleOwner.lifecycle.addObserver(observer)
+        onDispose {
+            lifecycleOwner.lifecycle.removeObserver(observer)
+        }
+    }
 
     LaunchedEffect(navBackStackEntry) {
         vm.hasActiveInStore()
@@ -80,7 +96,6 @@ fun AppNavHost(modifier: Modifier = Modifier) {
         }
         composable("playing") {
             SudokuGameScreen(
-                modifier = Modifier.padding(),
                 uiState = uiState,
                 onAction = {
                     vm.onPlayEvent(it)
@@ -91,6 +106,9 @@ fun AppNavHost(modifier: Modifier = Modifier) {
                 },
                 onExit = {
                     vm.saveGame()
+                },
+                onStopTimer = {
+                    vm.stopTimer()
                 }
             )
         }

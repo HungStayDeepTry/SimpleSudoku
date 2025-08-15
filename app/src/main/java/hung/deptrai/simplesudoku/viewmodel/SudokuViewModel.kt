@@ -87,8 +87,10 @@ class SudokuViewModel @Inject constructor(
             is PlayAction.RestartGame -> repo.resetGame()
             is PlayAction.PauseGame -> {
                 val pausedTime = timer.pause()
-                repo.pauseGame(pausedTime.toLong())
-                saveGame()
+                if (!uiState.value.isGameCompleted && !uiState.value.isGameFailed) {
+                    repo.pauseGame(pausedTime.toLong())
+                    saveGame()
+                }
             }
 
             is PlayAction.ResumeGame -> {
@@ -159,9 +161,20 @@ class SudokuViewModel @Inject constructor(
     fun loadLastGame() {
         viewModelScope.launch(Dispatchers.IO) {
             repo.loadLastUnfinishedGame()
-            timer.startFromInitialTime(parseTimeElapsedFromText(_uiState.value.timerText))
             repo.resumeGame()
+            repo.sudokuGame.collectLatest { game ->
+                if (game.gameStatus == GameStatus.ONGOING) {
+                    _uiState.update {
+                        it.copy(timerText = formatTimeElapsed(game.timeElapsed / 1000L))
+                    }
+                    timer.startFromInitialTime(parseTimeElapsedFromText(_uiState.value.timerText))
+                }
+            }
         }
+    }
+
+    fun stopTimer() {
+        timer.pause()
     }
 }
 
@@ -179,4 +192,40 @@ data class SudokuUiState(
     val selectedCell: Triple<Int, Int, Int> = Triple(-1, -1, 0),
     val isNoteMode: Boolean = false,
     val hasUnfinishedGame: Boolean = false
-)
+) {
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (javaClass != other?.javaClass) return false
+
+        other as SudokuUiState
+
+        if (errorCount != other.errorCount) return false
+        if (maxErrors != other.maxErrors) return false
+        if (isGameCompleted != other.isGameCompleted) return false
+        if (isGamePaused != other.isGamePaused) return false
+        if (isGameFailed != other.isGameFailed) return false
+        if (isNoteMode != other.isNoteMode) return false
+        if (hasUnfinishedGame != other.hasUnfinishedGame) return false
+        if (!cells.contentDeepEquals(other.cells)) return false
+        if (timerText != other.timerText) return false
+        if (difficulty != other.difficulty) return false
+        if (selectedCell != other.selectedCell) return false
+
+        return true
+    }
+
+    override fun hashCode(): Int {
+        var result = errorCount
+        result = 31 * result + maxErrors
+        result = 31 * result + isGameCompleted.hashCode()
+        result = 31 * result + isGamePaused.hashCode()
+        result = 31 * result + isGameFailed.hashCode()
+        result = 31 * result + isNoteMode.hashCode()
+        result = 31 * result + hasUnfinishedGame.hashCode()
+        result = 31 * result + cells.contentDeepHashCode()
+        result = 31 * result + timerText.hashCode()
+        result = 31 * result + difficulty.hashCode()
+        result = 31 * result + selectedCell.hashCode()
+        return result
+    }
+}

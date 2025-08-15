@@ -7,8 +7,9 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.Divider
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.VerticalDivider
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalDensity
@@ -25,7 +26,7 @@ fun SudokuBoard(
 ) {
     val density = LocalDensity.current
     val screenWidth = with(density) { screenSize.width.toDp() } - 48.dp
-    val boardWidth = if (screenWidth <= 450.dp) screenWidth else 450.dp
+    val boardWidth = if (screenWidth <= 450.dp) screenWidth else 430.dp
     val cellSize = boardWidth / 9
 
     Card(
@@ -47,7 +48,7 @@ fun SudokuBoard(
                             cellSize = cellSize
                         )
                         if (boxCol < 2) {
-                            Divider(
+                            VerticalDivider(
                                 modifier = Modifier
                                     .width(2.dp)
                                     .height(cellSize * 3),
@@ -57,7 +58,7 @@ fun SudokuBoard(
                     }
                 }
                 if (boxRow < 2) {
-                    Divider(
+                    HorizontalDivider(
                         modifier = Modifier
                             .height(2.dp)
                             .width(boardWidth),

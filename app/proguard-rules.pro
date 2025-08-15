@@ -19,3 +19,14 @@
 # If you keep the line number information, uncomment this to
 # hide the original source file name.
 #-renamesourcefileattribute SourceFile
+
+# Giữ tên class model dùng cho Gson/Room
+-keep class *.model.** { *; }
+-keepattributes *Annotation*
+
+# Giữ class entity của Room
+-keep class androidx.room.** { *; }
+
+# Nếu dùng Gson
+-keep class com.google.gson.** { *; }
+-dontwarn com.google.gson.**

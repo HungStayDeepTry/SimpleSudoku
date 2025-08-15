@@ -12,6 +12,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.Dp
@@ -22,7 +23,8 @@ fun CustomNavBottom(
     onClick: () -> Unit,
     icon: ImageVector? = null,
     text: String,
-    height: Dp
+    height: Dp,
+    color: Color? = null
 ) {
     Button(
         onClick = onClick,
@@ -30,7 +32,7 @@ fun CustomNavBottom(
             .fillMaxWidth()
             .height(height),
         colors = ButtonDefaults.buttonColors(
-            containerColor = MaterialTheme.colorScheme.primary
+            containerColor = color ?: MaterialTheme.colorScheme.primary
         )
     ) {
         if (icon != null) {

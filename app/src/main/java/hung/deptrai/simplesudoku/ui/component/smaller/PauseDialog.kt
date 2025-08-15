@@ -11,7 +11,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.Divider
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -31,7 +31,8 @@ fun PauseDialog(
     difficulty: Difficulty,
     errorCount: Int,
     maxErrors: Int,
-    onContinue: () -> Unit
+    onContinue: () -> Unit,
+    onClickNewGame: () -> Unit
 ) {
     Dialog(onDismissRequest = {
         onContinue()
@@ -56,7 +57,7 @@ fun PauseDialog(
                     fontWeight = FontWeight.Bold
                 )
 
-                Divider()
+                HorizontalDivider()
 
                 Column(
                     horizontalAlignment = Alignment.CenterHorizontally,
@@ -152,6 +153,12 @@ fun PauseDialog(
                     icon = Icons.Default.PlayArrow,
                     height = 48.dp,
                     onClick = onContinue
+                )
+                CustomNavBottom(
+                    text = stringResource(R.string.playing_new_game_button),
+                    height = 48.dp,
+                    onClick = onClickNewGame,
+                    color = MaterialTheme.colorScheme.error.copy(0.5f)
                 )
             }
         }

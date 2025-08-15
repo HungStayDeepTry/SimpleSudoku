@@ -56,12 +56,16 @@ class SudokuRepository @Inject constructor(
 
     fun startNewGame(difficulty: Difficulty) {
         store.startNewGame(difficulty)
-        updateGameFromStore()
+        scope.launch {
+            updateGameFromStore()
+        }
     }
 
     fun selectCell(row: Int, col: Int) {
         store.selectCell(row, col)
-        updateGameFromStore()
+        scope.launch {
+            updateGameFromStore()
+        }
     }
 
     fun getSelectedCell(): Triple<Int, Int, Int> {
@@ -70,37 +74,51 @@ class SudokuRepository @Inject constructor(
 
     fun cellErase(row: Int, col: Int) {
         store.cellErase(row, col)
-        updateGameFromStore()
+        scope.launch {
+            updateGameFromStore()
+        }
     }
 
     fun makeMove(row: Int, col: Int, value: Int?) {
         store.makeMove(row, col, value)
-        updateGameFromStore()
+        scope.launch {
+            updateGameFromStore()
+        }
     }
 
     fun giveHint(row: Int, col: Int) {
         store.giveHint(row, col)
-        updateGameFromStore()
+        scope.launch {
+            updateGameFromStore()
+        }
     }
 
     fun pauseGame(elapsedTime: Long) {
         store.pauseGame(elapsedTime)
-        updateGameFromStore()
+        scope.launch {
+            updateGameFromStore()
+        }
     }
 
     fun resumeGame() {
         store.resumeGame()
-        updateGameFromStore()
+        scope.launch {
+            updateGameFromStore()
+        }
     }
 
     fun resetGame() {
         store.resetGame()
-        updateGameFromStore()
+        scope.launch {
+            updateGameFromStore()
+        }
     }
 
     fun toggleNote(row: Int, col: Int, value: Int) {
         store.toggleNote(row, col, value)
-        updateGameFromStore()
+        scope.launch {
+            updateGameFromStore()
+        }
     }
 
     suspend fun loadLastUnfinishedGame() {
@@ -110,7 +128,7 @@ class SudokuRepository @Inject constructor(
     }
 
 
-    private fun updateGameFromStore() {
+    private suspend fun updateGameFromStore() {
         val current = store.getGame() ?: return
         copyGameData(current)
         emitGame()
@@ -139,16 +157,14 @@ class SudokuRepository @Inject constructor(
         }
     }
 
-    private fun emitGame() {
-        scope.launch {
-            val copiedCells = Array(9) { row ->
-                Array(9) { col ->
-                    val original = game.cells[row][col]
-                    original.copy()
-                }
+    private suspend fun emitGame() {
+        val copiedCells = Array(9) { row ->
+            Array(9) { col ->
+                val original = game.cells[row][col]
+                original.copy()
             }
-            _sudokuGame.emit(game.copy(cells = copiedCells))
         }
+        _sudokuGame.emit(game.copy(cells = copiedCells))
     }
 
     fun saveCurrentGame() {
