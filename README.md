@@ -29,7 +29,7 @@ A lightweight and clean Sudoku game built with **Jetpack Compose**, following th
 - 🚧 Save game state across sessions
 - ✅ Timer and performance tracking improvements
 - ✅ Dark mode support
-- ⏳ Note in the sudoku Cells
+- ✅ Note in the sudoku Cells
 - ⏳ Hint 
 
 ## Getting Started
