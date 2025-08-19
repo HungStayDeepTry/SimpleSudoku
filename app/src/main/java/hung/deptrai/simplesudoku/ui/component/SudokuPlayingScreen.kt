@@ -24,6 +24,7 @@ import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
 import hung.deptrai.simplesudoku.common.Cell
 import hung.deptrai.simplesudoku.ui.component.smaller.GameHeader
+import hung.deptrai.simplesudoku.ui.component.smaller.LoadingDialog
 import hung.deptrai.simplesudoku.ui.component.smaller.NumberInputPanel
 import hung.deptrai.simplesudoku.ui.component.smaller.PauseDialog
 import hung.deptrai.simplesudoku.ui.component.smaller.SudokuBoard
@@ -45,6 +46,7 @@ fun SudokuGameScreen(
     var showDifficultyDialog by rememberSaveable { mutableStateOf(false) }
     var showPauseDialog by rememberSaveable { mutableStateOf(false) }
     var hasHandledResult by rememberSaveable { mutableStateOf(false) }
+    LoadingDialog(uiState.isLoading)
 
     var size by remember { mutableStateOf(IntSize.Zero) }
 
@@ -60,7 +62,7 @@ fun SudokuGameScreen(
 
     DisposableEffect(Unit) {
         onDispose {
-            onExit
+            onExit()
         }
     }
 
@@ -112,7 +114,7 @@ fun SudokuGameScreen(
                 }
             },
             onDifficultySelected = { difficulty ->
-                onAction(PlayAction.RestartGame)
+                onGameEvent(HomeAction.onDeleteExistedGame)
                 onGameEvent(HomeAction.onPlayGame(difficulty))
             }
         )

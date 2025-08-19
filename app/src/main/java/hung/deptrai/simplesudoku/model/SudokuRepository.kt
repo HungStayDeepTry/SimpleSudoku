@@ -1,6 +1,5 @@
 package hung.deptrai.simplesudoku.model
 
-import hung.deptrai.simplesudoku.common.Cell
 import hung.deptrai.simplesudoku.common.Difficulty
 import hung.deptrai.simplesudoku.common.GameStatus
 import hung.deptrai.simplesudoku.common.SudokuGame
@@ -27,32 +26,7 @@ class SudokuRepository @Inject constructor(
     private val _hasUnfinishedGame = MutableStateFlow(false)
     val hasUnfinishedGame = _hasUnfinishedGame.asStateFlow()
 
-    private val cells: Array<Array<Cell>> = Array(9) { row ->
-        Array(9) { col ->
-            Cell(
-                row = row,
-                col = col,
-                value = 0,
-                isVisible = false,
-                isEditable = false,
-                userValue = null,
-                isSelected = false,
-                isHighlighted = false
-            )
-        }
-    }
-    private val game = SudokuGame(
-        id = "",
-        gameStatus = GameStatus.ONGOING,
-        cells = cells,
-        maxErrors = 0,
-        errorCount = 0,
-        difficulty = Difficulty.Advanced,
-        timeElapsed = 0L
-    )
-
     private val scope = CoroutineScope(Dispatchers.Default)
-
 
     fun startNewGame(difficulty: Difficulty) {
         store.startNewGame(difficulty)
@@ -127,44 +101,9 @@ class SudokuRepository @Inject constructor(
         updateGameFromStore()
     }
 
-
     private suspend fun updateGameFromStore() {
         val current = store.getGame() ?: return
-        copyGameData(current)
-        emitGame()
-    }
-
-    private fun copyGameData(source: SudokuGame) {
-        game.id = source.id
-        game.gameStatus = source.gameStatus
-        game.errorCount = source.errorCount
-        game.maxErrors = source.maxErrors
-        game.difficulty = source.difficulty
-        game.timeElapsed = source.timeElapsed
-
-        for (row in 0..8) {
-            for (col in 0..8) {
-                val sourceCell = source.cells[row][col]
-                val targetCell = game.cells[row][col]
-                targetCell.value = sourceCell.value
-                targetCell.isVisible = sourceCell.isVisible
-                targetCell.isEditable = sourceCell.isEditable
-                targetCell.userValue = sourceCell.userValue
-                targetCell.isSelected = sourceCell.isSelected
-                targetCell.isHighlighted = sourceCell.isHighlighted
-                targetCell.notes = sourceCell.notes
-            }
-        }
-    }
-
-    private suspend fun emitGame() {
-        val copiedCells = Array(9) { row ->
-            Array(9) { col ->
-                val original = game.cells[row][col]
-                original.copy()
-            }
-        }
-        _sudokuGame.emit(game.copy(cells = copiedCells))
+        _sudokuGame.emit(current)
     }
 
     fun saveCurrentGame() {

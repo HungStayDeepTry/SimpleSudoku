@@ -3,11 +3,11 @@ package hung.deptrai.simplesudoku.common
 data class Cell(
     val row: Int,
     val col: Int,
-    var value: Int,
-    var isVisible: Boolean,
-    var isEditable: Boolean,
-    var userValue: Int?,
-    var isSelected: Boolean = false,
-    var isHighlighted: Boolean = false,
-    var notes: MutableList<Boolean> = MutableList(9) { false }
+    val value: Int,
+    val isVisible: Boolean,
+    val isEditable: Boolean,
+    val userValue: Int?,
+    val isSelected: Boolean = false,
+    val isHighlighted: Boolean = false,
+    val notes: List<Boolean> = List(9) { false }
 )

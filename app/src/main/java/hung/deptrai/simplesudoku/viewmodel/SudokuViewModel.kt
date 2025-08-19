@@ -122,10 +122,19 @@ class SudokuViewModel @Inject constructor(
 
     private fun startNewGame(difficulty: Difficulty) {
         _uiState.update {
-            it.copy(timerText = "00:00", selectedCell = Triple(-1, -1, 0))
+            it.copy(
+                timerText = "00:00",
+                selectedCell = Triple(-1, -1, 0),
+                isLoading = true
+            )
         }
-        repo.startNewGame(difficulty)
-        timer.start()
+        viewModelScope.launch(Dispatchers.Default) {
+            repo.startNewGame(difficulty)
+            _uiState.update {
+                it.copy(isLoading = false)
+            }
+            timer.start()
+        }
     }
 
     private fun updateGameState(game: SudokuGame) {
@@ -138,7 +147,12 @@ class SudokuViewModel @Inject constructor(
                 isGamePaused = game.gameStatus == GameStatus.PAUSED,
                 isGameFailed = game.gameStatus == GameStatus.FINISHED,
                 difficulty = game.difficulty,
-                selectedCell = repo.getSelectedCell()
+                selectedCell = repo.getSelectedCell(),
+                isNoteMode = it.isNoteMode,
+                isLoading = if (game.gameStatus == GameStatus.ONGOING ||
+                    game.gameStatus == GameStatus.PAUSED ||
+                    game.gameStatus == GameStatus.COMPLETED ||
+                    game.gameStatus == GameStatus.FINISHED) false else it.isLoading
             )
         }
     }
@@ -180,7 +194,7 @@ class SudokuViewModel @Inject constructor(
 
 data class SudokuUiState(
     val cells: Array<Array<Cell>> = Array(9) { row ->
-        Array(9) { col -> Cell(row, col, 0, false, true, null, false, false) }
+        Array(9) { col -> Cell(row, col, 0, false, true, null, false, false, List(9) { false }) }
     },
     val errorCount: Int = 0,
     val maxErrors: Int = 3,
@@ -191,7 +205,8 @@ data class SudokuUiState(
     val difficulty: Difficulty = Difficulty.Beginner,
     val selectedCell: Triple<Int, Int, Int> = Triple(-1, -1, 0),
     val isNoteMode: Boolean = false,
-    val hasUnfinishedGame: Boolean = false
+    val hasUnfinishedGame: Boolean = false,
+    val isLoading: Boolean = true
 ) {
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
